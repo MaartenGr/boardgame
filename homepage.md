@@ -1,5 +1,4 @@
-
-![alt text](../images/logo_new.png "PCR")
+# Exploring one year of Board Games
  
 > Code and instructions for creating a turnover predicting-API
 
@@ -10,24 +9,17 @@ The API predicts the chance of a candidate staying more than one year
 at company and additionally provides the reasoning for that prediction.   
 
 <div align="center">
-  <sub>The job application supporting API. Built with ❤︎ by
-  <a href="mailto:m.grootendorst@vanspaendonck.nl">Maarten Grootendorst</a>.
-</div>
-
-<div align="center">
   <br>
   <img src="https://img.shields.io/badge/MADE%20WITH-PYTHON%20-red?style=for-the-badge"
       alt="API stability" height="30"/>
-  <img src="https://img.shields.io/badge/SERVED%20WITH-FastAPI-blue?style=for-the-badge"
-      alt="API stability" height="30"/>
-  <img src="https://img.shields.io/badge/COMPATIBLE%20WITH-DOCKER-green?style=for-the-badge"
+  <img src="https://img.shields.io/badge/SERVED%20WITH-Heroku-blue?style=for-the-badge"
       alt="API stability" height="30"/>
 </div>
 
 
 <div align="center">
   <sub>The job application supporting API. Built with ❤︎ by
-  <a href="mailto:m.grootendorst@vanspaendonck.nl">Maarten Grootendorst</a>.
+  <a href="https://github.com/MaartenGr">Maarten</a>.
 </div>
 
 
