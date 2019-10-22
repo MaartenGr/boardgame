@@ -16,10 +16,3 @@ at company and additionally provides the reasoning for that prediction.
       alt="API stability" height="30"/>
 </div>
 
-
-<div align="center">
-  <sub>The job application supporting API. Built with ❤︎ by
-  <a href="https://github.com/MaartenGr">Maarten</a>.
-</div>
-
-
