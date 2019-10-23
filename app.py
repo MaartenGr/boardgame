@@ -28,7 +28,7 @@ def main():
         st.title("Compare players")
 
 
-@st.cache
+#@st.cache
 def load_data():
     df = pd.read_csv("https://github.com/MaartenGr/boardgame/raw/master/files/boardgame.csv")
     player_list = df.Players.unique()
