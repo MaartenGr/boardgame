@@ -9,7 +9,7 @@ import general as gn
 def main():
     df, player_list = load_data()
 
-    body = " ".join(open("homepage.md", 'r').readlines())
+    body = " ".join(open("https://github.com/MaartenGr/boardgame/raw/master/markdown/homepage.md", 'r').readlines())
     readme_text = st.markdown(body, unsafe_allow_html=True)
 
     st.sidebar.title("Menu")
@@ -17,7 +17,7 @@ def main():
                                                            "Stats per player", "Compare players"])
     if app_mode == "Instruction":
         readme_text.empty()
-        body = " ".join(open("instructions.md", 'r').readlines())
+        body = " ".join(open("https://github.com/MaartenGr/boardgame/raw/master/markdown/homepage.md", 'r').readlines())
         st.markdown(body, unsafe_allow_html=True)
     elif app_mode == "General":
         gn.explore_data(df, readme_text)
@@ -30,7 +30,7 @@ def main():
 
 @st.cache
 def load_data():
-    df = pd.read_csv("boardgame.csv")
+    df = pd.read_csv("https://github.com/MaartenGr/boardgame/raw/master/files/boardgame.csv")
     player_list = df.Players.unique()
     player_list = [players.split('+') for players in player_list]
     player_list = list(set([player for sublist in player_list for player in sublist]))
