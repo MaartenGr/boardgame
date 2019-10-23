@@ -2,3 +2,5 @@ streamlit==0.47.4
 numpy==1.16.4
 matplotlib==3.1.1
 pandas==0.25.0
+altair==3.2.0
+plotly==4.2.1
