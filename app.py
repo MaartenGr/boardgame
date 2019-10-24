@@ -6,6 +6,7 @@ import statsperplayer as spp
 import general as gn
 import compare
 
+
 def main():
     df, player_list = load_data()
 
@@ -29,13 +30,13 @@ def main():
         compare.compare_players(df, player_list)
 
 
-#@st.cache
+# @st.cache
 def load_data():
     df = pd.read_csv("https://github.com/MaartenGr/boardgame/raw/master/files/boardgame.csv")
+    df.Date = pd.to_datetime(df.Date)
     player_list = df.Players.unique()
     player_list = [players.split('+') for players in player_list]
     player_list = list(set([player for sublist in player_list for player in sublist]))
-
     return df, player_list
 
 

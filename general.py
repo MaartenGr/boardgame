@@ -1,8 +1,33 @@
 import streamlit as st
 import plotly.graph_objects as go
 import altair as alt
+import numpy as np
+import pandas as pd
+
 
 def explore_data(df, readme_text):
+    prepare_layout(readme_text, df)
+    sidebar(df)
+    plot_graph(df)
+
+
+def sidebar(df):
+
+    to_plot = df.sort_values("Date").set_index("Date").resample("3D").count().reset_index()
+
+    chart = alt.Chart(to_plot).mark_area(
+        color='goldenrod',
+        opacity=1
+    ).encode(
+        x='Date',
+        y='Players',
+    )
+
+    st.sidebar.altair_chart(chart)
+
+
+
+def prepare_layout(readme_text, df):
     readme_text.empty()
     st.header("Data Exploration")
     st.write("This page contains basic exploratory data analyses for the purpose of getting a general "
@@ -15,6 +40,9 @@ def explore_data(df, readme_text):
     st.header("Total amount of times a game has been played")
     st.write("Below you can see the total amount of time a game has been played. I should note that these games"
              "can also be played with different number of people.")
+
+
+def plot_graph(df):
     grouped_by_game = df.groupby("Game").count().reset_index()
 
     order_by = st.selectbox("Order by:", ["Name", "Amount"])
