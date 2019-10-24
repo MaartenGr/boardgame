@@ -1,12 +1,13 @@
 # Exploring one year of Board Games
  
-> Code and instructions for creating a turnover predicting-API
+> Dashboard for exploring board games
 
-Choosing between several possible candidates when hiring is a 
-difficult and complex process. One of the questions you might ask
-is whether this applicant is likely to stay at the company one year later. 
-The API predicts the chance of a candidate staying more than one year
-at company and additionally provides the reasoning for that prediction.   
+Some info here about how to use the dashboard...
+
+**To do**:
+* Make sure you can load in your own file
+* Additional statistics
+* Perhaps some machine learning... 
 
 <div align="center">
   <br>

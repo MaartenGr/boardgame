@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 
 import statsperplayer as spp
 import general as gn
-
+import compare
 
 def main():
     df, player_list = load_data()
@@ -26,6 +26,7 @@ def main():
     elif app_mode == "Compare players":
         readme_text.empty()
         st.title("Compare players")
+        compare.compare_players(df, player_list)
 
 
 #@st.cache

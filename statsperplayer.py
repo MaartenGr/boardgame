@@ -43,7 +43,7 @@ def plot_min_max(df, player):
                             [nr_played, 'Times played']], columns=['Score', 'Name'])
 
     bars = alt.Chart(to_plot,
-                     height=200).mark_bar().encode(
+                     height=200).mark_bar(color='#4db6ac').encode(
         x='Score:Q'.format(player),
         y="Name:O"
     )
@@ -90,7 +90,7 @@ def plot_bar(df, player):
     df = df.reset_index()
     bars = alt.Chart(df,
                      height=100 + (20 * len(df)),
-                     title="Average scores per game").mark_bar().encode(
+                     title="Average scores per game").mark_bar(color='#4db6ac').encode(
         x='{}_score:Q'.format(player),
         y="Game:O"
     )
