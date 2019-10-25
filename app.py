@@ -1,10 +1,11 @@
 import streamlit as st
 import pandas as pd
-import plotly.graph_objects as go
 
-import statsperplayer as spp
-import general as gn
+# Custom packages
+import statsperplayer
+import general
 import compare
+import games
 
 
 def main():
@@ -14,20 +15,26 @@ def main():
     readme_text = st.markdown(body, unsafe_allow_html=True)
 
     st.sidebar.title("Menu")
-    app_mode = st.sidebar.selectbox("Selecteer de modus", ["Homepage", "General",
-                                                           "Stats per player", "Compare players"])
+    app_mode = st.sidebar.selectbox("Selecteer de modus", ["Homepage",
+                                                           "General",
+                                                           "Stats per player",
+                                                           "Compare players",
+                                                           "Explore games"])
     if app_mode == "Instruction":
         readme_text.empty()
         body = " ".join(open("files/instructions.md", 'r').readlines())
         st.markdown(body, unsafe_allow_html=True)
     elif app_mode == "General":
-        gn.explore_data(df, readme_text)
+        general.explore_data(df, readme_text)
     elif app_mode == "Stats per player":
-        spp.stats_per_player(df, player_list, readme_text)
+        statsperplayer.stats_per_player(df, player_list, readme_text)
     elif app_mode == "Compare players":
         readme_text.empty()
         st.title("Compare players")
         compare.compare_players(df, player_list)
+    elif app_mode == "Explore games":
+        readme_text.empty()
+        games.explore(df)
 
 
 # @st.cache

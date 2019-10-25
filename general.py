@@ -26,7 +26,6 @@ def sidebar(df):
     st.sidebar.altair_chart(chart)
 
 
-
 def prepare_layout(readme_text, df):
     readme_text.empty()
     st.header("Data Exploration")
@@ -47,7 +46,8 @@ def plot_graph(df):
 
     order_by = st.selectbox("Order by:", ["Name", "Amount"])
     if order_by == "Amount":
-        bars = alt.Chart(grouped_by_game).mark_bar(color='#4db6ac').encode(
+        bars = alt.Chart(grouped_by_game,
+                         height=100+(20*len(grouped_by_game))).mark_bar(color='#4db6ac').encode(
             x=alt.X('Players:Q', axis=alt.Axis(title='Total times played')),
             y=alt.Y('Game:O',
                     sort=alt.EncodingSortField(
@@ -57,7 +57,8 @@ def plot_graph(df):
                     )
             )
     else:
-        bars = alt.Chart(grouped_by_game).mark_bar(color='#4db6ac').encode(
+        bars = alt.Chart(grouped_by_game,
+                         height=100+(20*len(grouped_by_game))).mark_bar(color='#4db6ac').encode(
             x=alt.X('Players:Q', axis=alt.Axis(title='Total times played')),
             y='Game:O',
         )
