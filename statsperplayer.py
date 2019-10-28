@@ -1,17 +1,22 @@
 import altair as alt
 import streamlit as st
 import pandas as pd
+import numpy as np
+from scipy.stats import wilcoxon
 
 
 def stats_per_player(df, player_list, readme_text):
     """ The stats per player page"""
     # Prepare layout
     player = prepare_layout(player_list, readme_text)
+    selection, grouped = score_per_player(df, player)
 
     # Visualizations
-    selection = score_per_player(df, player)
+    plot_bar(grouped, player)
     stats_per_game(selection, player)
+    statistical_difference(selection, player)
     show_raw_data(df)
+    st.subheader("TO DO: Player X wins on average 20% of the games played.")
 
 
 def show_raw_data(df):
@@ -28,6 +33,37 @@ def stats_per_game(df, player):
     selected_game = st.selectbox("Select a game to explore.", df.Game.unique())
     selection = df.loc[(df.Game == selected_game), :]
     plot_min_max(selection, player)
+
+
+def statistical_difference(selection, player):
+
+    # Extract average score of game without player and player values for game
+    score_selection = selection.loc[:, [column for column in selection.columns
+                                        if (('score' in column) &
+                                            ('has_score' not in column) &
+                                            (player + '_score' not in column))]]
+    score_selection = score_selection.to_numpy()
+    average_score = np.mean(score_selection[np.nonzero(score_selection)])
+    player_values = selection[player + "_score"].values
+
+    # Use an one-sample Wilcoxon signed-rank test if sufficient n
+    if len(player_values) > 15:
+        st.subheader("Wilcoxon signed-rank test")
+        p = wilcoxon(player_values-average_score)
+        if p[1] < 0.05:
+            st.write("According to an one-sample Wilcoxon signed-rank test there "
+                     "is a significant difference between the scores of {} (mean score "
+                     "of {}) and the average (score of {}).".format(player,
+                                                                    round(np.mean(player_values), 2),
+                                                                    round(average_score, 2)))
+        else:
+            st.write("According to an one-sample Wilcoxon signed-rank test there "
+                     "is no significant difference between the scores of {} (mean score "
+                     "of {}) and the average (score of {}).".format(player,
+                                                                    round(np.mean(player_values), 2),
+                                                                    round(average_score, 2)))
+    else:
+        st.write("Insufficient data to run statistical test. A minimum 15 matches is necessary.")
 
 
 def plot_min_max(df, player):
@@ -67,9 +103,9 @@ def score_per_player(df, select_player):
                        (df.has_winner == 1) &
                        (df[select_player + "_played"] == 1), :]
     grouped = selection.groupby("Game").mean()[[select_player + '_score']]
-    plot_bar(grouped, select_player)
 
-    return selection
+
+    return selection, grouped
 
 
 def prepare_layout(player_list, readme_text):
@@ -104,3 +140,6 @@ def plot_bar(df, player):
     )
 
     st.altair_chart(bars + text)
+
+
+
