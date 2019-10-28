@@ -13,8 +13,8 @@ def stats_per_player(df, player_list, readme_text):
 
     # Visualizations
     plot_bar(grouped, player)
-    stats_per_game(selection, player)
-    statistical_difference(selection, player)
+    selected_game_df = stats_per_game(selection, player)
+    statistical_difference(selected_game_df, player)
     show_raw_data(df)
     st.subheader("TO DO: Player X wins on average 20% of the games played.")
 
@@ -33,6 +33,7 @@ def stats_per_game(df, player):
     selected_game = st.selectbox("Select a game to explore.", df.Game.unique())
     selection = df.loc[(df.Game == selected_game), :]
     plot_min_max(selection, player)
+    return selection
 
 
 def statistical_difference(selection, player):
@@ -103,7 +104,6 @@ def score_per_player(df, select_player):
                        (df.has_winner == 1) &
                        (df[select_player + "_played"] == 1), :]
     grouped = selection.groupby("Game").mean()[[select_player + '_score']]
-
 
     return selection, grouped
 
