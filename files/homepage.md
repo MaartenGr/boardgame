@@ -1,8 +1,6 @@
-# Exploring one year of Board Games
- 
 > Dashboard for exploring board games
 
-Some info here about how to use the dashboard...
+Some info here about how to use the dashboard..
 
 **To do**:
 * Make sure you can load in your own file

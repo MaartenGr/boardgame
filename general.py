@@ -1,10 +1,14 @@
 import streamlit as st
 import altair as alt
 import numpy as np
+import pandas as pd
 
 
-def explore_data(df, readme_text):
-    prepare_layout(readme_text, df)
+SPACES = '&nbsp;' * 10
+
+
+def explore_data(df):
+    prepare_layout(df)
     sidebar_activity_plot(df)
     plot_play_count_graph(df)
     longest_break_between_games(df)
@@ -13,39 +17,39 @@ def explore_data(df, readme_text):
 
 
 def sidebar_activity_plot(df):
-
     to_plot = df.sort_values("Date").set_index("Date").resample("3D").count().reset_index()
-
     chart = alt.Chart(to_plot).mark_area(
         color='goldenrod',
         opacity=1
     ).encode(
         x='Date',
         y='Players',
-    )
+    ).properties(background='transparent')
 
     st.sidebar.altair_chart(chart)
 
 
-def prepare_layout(readme_text, df):
-    readme_text.empty()
-    st.header("Data Exploration")
+def prepare_layout(df):
+    st.title("🎲 Data Exploration")
     st.write("This page contains basic exploratory data analyses for the purpose of getting a general "
-             "feeling of what the data contains."
-             " "
-             " "
-             " ")
-    show_raw_data(df)
-
-    st.subheader("Total amount of times a game has been played")
-    st.write("Below you can see the total amount of time a game has been played. I should note that these games"
-             "can also be played with different number of people.")
+             "feeling of what the data contains. ".format(SPACES))
+    st.markdown("There are several things you see on this page:".format(SPACES))
+    st.markdown("{}🔹 On the **left** you can see how often games were played in the last year of matches. ".format(SPACES))
+    st.markdown("{}🔹 You can see the **total amount** certain board games have been played. ".format(SPACES))
+    st.markdown("{}🔹 The longest **break** between board games. ".format(SPACES))
+    st.markdown("{}🔹 The **longest chain** of games played in days. ".format(SPACES))
+    st.markdown("{}🔹 The **day** most games have been played. ".format(SPACES))
+    st.markdown("<br>", unsafe_allow_html=True)
 
 
 def plot_play_count_graph(df):
+    st.header("**♟** Board Game Frequency **♟**")
+    st.write("Below you can see the total amount of time a game has been played. I should note that these games "
+             "can also be played with different number of people.")
+
     grouped_by_game = df.groupby("Game").count().reset_index()
 
-    order_by = st.selectbox("Order by:", ["Name", "Amount"])
+    order_by = st.selectbox("Order by:", ["Amount", "Name"])
     if order_by == "Amount":
         bars = alt.Chart(grouped_by_game,
                          height=100+(20*len(grouped_by_game))).mark_bar(color='#4db6ac').encode(
@@ -84,24 +88,23 @@ def show_raw_data(df):
 def longest_break_between_games(df):
     """ Extract the longest nr of days between games """
 
-    longest_not_played = 0
-    day_previous = ""
-    day_next = ""
-    values = df.Date.values
+    dates = df.groupby("Date").count().index
+    differences = [(dates[i],
+                    dates[i + 1],
+                    int((dates[i + 1] - dates[i]) / np.timedelta64(1, 'D')))
+                   for i in range(len(dates) - 1)]
+    differences = pd.DataFrame(differences, columns=['Start_date',
+                                                     'End_date',
+                                                     'Count']).sort_values('Count', ascending=False).head(5)
 
-    for i in range(len(df)-1):
-        days = values[i+1] - values[i]
-        days = days.astype('timedelta64[D]') / np.timedelta64(1, 'D')
+    st.header("**♟** Longest Break between Games **♟**")
+    st.write("The longest breaks between games were:")
 
-        if days > longest_not_played:
-            longest_not_played = int(days)
-            day_previous = str(values[i]).split("T")[0]
-            day_next = str(values[i+1]).split("T")[0]
-
-    st.subheader("Longest break between games")
-    st.write("The longest break between games was {} days between {} and {}.".format(longest_not_played,
-                                                                                     day_previous,
-                                                                                     day_next))
+    for row in differences.iterrows():
+        start_date = str(row[1].Start_date).split(" ")[0]
+        end_date = str(row[1].End_date).split(" ")[0]
+        st.markdown("{}🔹 **{}** days between **{}** and **{}**".format(SPACES, row[1].Count, start_date, end_date))
+    st.markdown("<br>", unsafe_allow_html=True)
 
 
 def most_subsequent_days_played(df):
@@ -127,10 +130,11 @@ def most_subsequent_days_played(df):
                 day_previous = str(dates[i + 1] - np.timedelta64(count, 'D')).split("T")[0]
             count = 0
 
-    st.subheader("Longest chain of games played")
-    st.write("We played board games at most {} days in a row between {} and {}.".format(most_subsequent_days,
-                                                                                        day_previous,
-                                                                                        day_next))
+    st.header("**♟** Longest Chain of Games Played **♟**")
+    st.write("The longest number of subsequent days we played games was:")
+    st.write("{}🔸 **{}** days".format(SPACES, most_subsequent_days))
+    st.write("{}🔹 between **{}** and **{}**".format(SPACES, day_previous, day_next))
+    st.markdown("<br>", unsafe_allow_html=True)
 
 
 def most_games(df):
@@ -146,8 +150,10 @@ def most_games(df):
     played_idx = np.where(played.any(axis=0))[0]
     players = [player.split("_")[0] for player in played.columns[played_idx]]
 
-    st.subheader("Most games")
-    st.write("The most games were played on {} with {} games.".format(date, nr_games))
-    st.write("Players involved: ")
-    for player in players:
-        st.write("  "*10+player)
+    st.header("**♟** Most Games Played in One Day **♟**")
+    st.write("The most games on a single day were played on:")
+    st.write("{}🔸 **{}** with **{}** games.".format(SPACES, date, nr_games))
+    st.write("Players that took in a part in at least one of the games: ")
+    players = ["**" + player + "**" for player in players]
+    players[-1] = 'and ' + players[-1]
+    st.write("{}🔹 {}".format(SPACES, ", ".join(players)))

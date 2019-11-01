@@ -3,15 +3,61 @@ import numpy as np
 import pandas as pd
 import altair as alt
 
+SPACES = '&nbsp;' * 10
 
-def explore(df):
+
+def explore(df, player_list):
     selection_df, selected_game = prepare_layout(df)
     score_selection = plot_distribution(selection_df)
-    show_min_max_stats(score_selection)
+    frequent_players(selection_df, player_list)
+    show_min_max_stats(score_selection, selected_game)
     sidebar_activity_plot(selection_df)
 
 
-def show_min_max_stats(score_selection):
+def prepare_layout(df):
+    st.title("🎲 Explore games")
+    st.write("In this section you can explore the games that were played in the last year. "
+             "Note that some games have different versions wich are needed to select in order to continue. "
+             "For example, Qwixx also has a 'Big Points' version which typically leads to much higher points. ")
+    st.markdown("There are several things you see on this page:".format(SPACES))
+    st.markdown("{}🔹 On the **left** you can see how often the selected game was played "
+                "in the last year. ".format(SPACES))
+    st.markdown("{}🔹 You can see the **distribution** of scores for the selected game. ".format(SPACES))
+    st.markdown("{}🔹 The **frequency** of matches for each player. ".format(SPACES))
+    st.markdown("{}🔹 The **top** and **bottom** players for the selected game.".format(SPACES))
+    games = list(df.Game.unique())
+    games.sort()
+    selected_game = st.selectbox("Select a game to explore.", games)
+    selection = df.loc[(df.Game == selected_game), :]
+
+    versions = list(selection.Version.unique())
+    versions.sort()
+    if len(versions) > 1:
+        version = st.selectbox("Select a game to explore.", versions)
+        selection = selection.loc[selection.Version == version, :]
+
+    return selection, selected_game
+
+
+def plot_distribution(df):
+    st.header("**♟** Distribution of Scores **♟**")
+    st.write("Here, you can see the distribution of all scores that were achieved in the game. ")
+    df = df.loc[:, [column for column in df.columns if ('score' in column) & ('has_score' not in column)]]
+
+    game_scores = np.array(df)
+    game_scores = pd.DataFrame(game_scores[game_scores.nonzero()], columns=['Scores'])
+
+    chart = alt.Chart(game_scores).mark_bar().encode(
+        alt.X("Scores:Q"),
+        y='count()',
+    )
+
+    st.altair_chart(chart)
+
+    return df
+
+
+def show_min_max_stats(score_selection, selected_game):
     score_matrix = np.array(score_selection)
 
     # Calculate average scores per player
@@ -43,44 +89,43 @@ def show_min_max_stats(score_selection):
     min_player = score_selection.columns[min_y[0]].split("_")[0]
     min_score = score_matrix[min_x[0]][min_y[0]]
 
-    # Write results
-    st.subheader("Top players")
-    st.write("Highest score by {} with {} points".format(max_player, max_score))
-    st.write("Highest average score by {} with {} points".format(high_avg_player,
-                                                                 high_avg_player_val))
-    st.subheader("Bottom players")
-    st.write("Lowest (non-zero) score by {} with {} points".format(min_player, min_score))
-    st.write("Lowest average score by {} with {} points".format(low_avg_player,
-                                                                low_avg_player_val))
+    # Top players
+    st.header("**♟** Top players **♟**")
+    st.write("Here are the best players for the game **{}**:".format(selected_game))
+    st.write("{}🔹 Highest score by **{}** with {} points".format(SPACES, max_player, max_score))
+    st.write("{}🔸 Highest average score by **{}** with {} points".format(SPACES, high_avg_player, high_avg_player_val))
+    st.write(" ")
+
+    # Bottom players
+    st.header("**♟** Bottom players **♟**")
+    st.write("Here are the worst players for the game **{}**:".format(selected_game))
+    st.write("{}🔹 Lowest (non-zero) score by **{}** with {} points".format(SPACES, min_player, min_score))
+    st.write("{}🔸 Lowest average score by **{}** with {} points".format(SPACES, low_avg_player, low_avg_player_val))
 
 
-def prepare_layout(df):
-    st.title("Explore games")
-    selected_game = st.selectbox("Select a game to explore.", df.Game.unique())
-    selection = df.loc[(df.Game == selected_game), :]
+def frequent_players(selection_df, player_list):
+    st.header("**♟** Frequency of Matches **♟**")
+    st.write("For each player, their total number of matches is displayed below.")
+    # Calculate Frequencies
+    frequency = [len(selection_df.loc[selection_df[player + "_played"] == 1, :]) for player in player_list]
+    result = pd.DataFrame(np.array([player_list, frequency]).T, columns=['Player', 'Frequency'])
 
-    versions = selection.Version.unique()
-    if len(versions) > 1:
-        version = st.selectbox("Select a game to explore.", versions)
-        selection = selection.loc[selection.Version == version, :]
-
-    return selection, selected_game
-
-
-def plot_distribution(df):
-    df = df.loc[:, [column for column in df.columns if ('score' in column) & ('has_score' not in column)]]
-
-    game_scores = np.array(df)
-    game_scores = pd.DataFrame(game_scores[game_scores.nonzero()], columns=['Scores'])
-
-    chart = alt.Chart(game_scores).mark_bar().encode(
-        alt.X("Scores:Q"),
-        y='count()',
+    # Visualize Results
+    bars = alt.Chart(result,
+                     height=200).mark_bar(color='#4db6ac').encode(
+        x='Frequency:Q',
+        y="Player:O"
     )
 
-    st.altair_chart(chart)
+    text = bars.mark_text(
+        align='left',
+        baseline='middle',
+        dx=3  # Nudges text to right so it doesn't appear on top of the bar
+    ).encode(
+        text='Frequency:Q'
+    )
 
-    return df
+    st.altair_chart(bars + text)
 
 
 def sidebar_activity_plot(selection_df):
@@ -92,7 +137,7 @@ def sidebar_activity_plot(selection_df):
     ).encode(
         x='Date',
         y='Players',
-    )
+    ).properties(background='transparent')
 
     st.sidebar.altair_chart(chart)
 
