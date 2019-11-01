@@ -32,7 +32,7 @@ def load_data_option():
     return link_to_data, is_loaded_header
 
 
-@st.cache(allow_output_mutation=True)
+@st.cache
 def load_external_data(link):
     """ Load data from a link and preprocess it"""
     exception = False
