@@ -7,13 +7,20 @@ import pandas as pd
 SPACES = '&nbsp;' * 10
 
 
-def explore_data(df):
+def load_page(df):
+    avg_nr_games_per_day(df)
     prepare_layout(df)
     sidebar_activity_plot(df)
     plot_play_count_graph(df)
     longest_break_between_games(df)
     most_subsequent_days_played(df)
     most_games(df)
+
+
+def avg_nr_games_per_day(df):
+    average_nr_games_per_day = round(np.mean(df.groupby('Date').count().has_score), 2)
+    st.write("On average {} games per day were played on days "
+             "that there were board game matches".format(average_nr_games_per_day))
 
 
 def sidebar_activity_plot(df):
@@ -23,7 +30,7 @@ def sidebar_activity_plot(df):
         opacity=1
     ).encode(
         x='Date',
-        y='Players',
+        y=alt.Y('Players', title='Number of Games'),
     ).properties(background='transparent')
 
     st.sidebar.altair_chart(chart)

@@ -1,12 +1,12 @@
+import numpy as np
+import pandas as pd
 import altair as alt
 import streamlit as st
-import pandas as pd
-import numpy as np
 
 SPACES = '&nbsp;' * 10
 
 
-def compare_players(df, player_list):
+def load_page(df, player_list):
     player_one, player_two = prepare_layout(player_list)
     two_player_matches, matches_df = check_if_two_player_matches_exist(df, player_one, player_two)
 
@@ -52,7 +52,7 @@ def sidebar_graph(df, player_one, player_two):
         opacity=1
     ).encode(
         x='Date',
-        y='Players',
+        y=alt.Y('Players', title='Number of Games'),
     ).properties(background='transparent')
 
     if len(to_plot) > 0:
