@@ -2,36 +2,54 @@ import numpy as np
 import pandas as pd
 import altair as alt
 import streamlit as st
+from typing import List, Tuple
 
 SPACES = '&nbsp;' * 10
 
 
-def load_page(df, player_list):
+def load_page(df: pd.DataFrame,
+              player_list: List[str]) -> None:
+    """ In this section you can compare two players against each other based on their respective performances.
+
+    Please note that the Head to Head section is meant for games that were played with 2 players against each other.
+
+    Sections:
+        * The Winner
+        * Stats per Game
+
+    Parameters:
+    -----------
+
+    df : pandas.core.frame.DataFrame
+        The data to be used for the analyses of played board game matches.
+
+    player_list : list of str
+        List of players that participated in the board games
+    """
+
     player_one, player_two = prepare_layout(player_list)
     two_player_matches, matches_df = check_if_two_player_matches_exist(df, player_one, player_two)
 
     if two_player_matches:
-        sidebar_graph(matches_df, player_one, player_two)
-        general_stats(df, player_one, player_two)
-        stats_per_game(player_one, player_two, matches_df)
+        sidebar_frequency_graph(matches_df)
+        extract_winner(df, player_one, player_two)
+        stats_per_game(matches_df, player_one, player_two)
     else:
         st.header("🏳️ Error")
         st.write("No two player matches were played with **{}** and **{}**. "
                  "Please select different players".format(player_one, player_two))
 
 
-def check_if_two_player_matches_exist(df, player_one, player_two):
-    games = df.loc[(df[player_one + "_played"] == 1) &
-                   (df[player_two + "_played"] == 1) &
-                   (df["Nr_players"] == 2), :]
+def prepare_layout(player_list: List[str]) -> Tuple[str, str]:
+    """ Create the layout for the page including general selection options
 
-    if (len(games) == 0) | (player_one == player_two):
-        return False, games
-    else:
-        return True, games
+    Parameters:
+    -----------
 
+    player_list : list of str
+        List of players that participated in the board games
+    """
 
-def prepare_layout(player_list):
     # Choose players
     st.title("🎲 Head to Head")
     st.write("In this section you can compare two players against each other based on their"
@@ -44,9 +62,56 @@ def prepare_layout(player_list):
     return player_one, player_two
 
 
-def sidebar_graph(df, player_one, player_two):
-    to_plot = df.sort_values("Date").set_index("Date").resample("3D").count().reset_index()
+def check_if_two_player_matches_exist(df: pd.DataFrame,
+                                      player_one: str,
+                                      player_two: str) -> Tuple[bool, pd.DataFrame]:
+    """ Checks if player_one and player_two have played against each other in two player games
 
+
+    Parameters:
+    -----------
+
+    df : pandas.core.frame.DataFrame
+        The data to be used for the analyses of played board game matches.
+
+    player_one : str
+        One of the players in the game
+
+    player_two : str
+        One of the players in the game
+
+    Returns:
+    --------
+
+    boolean
+        True if there are matches played between player_one and player_two
+        False otherwise
+
+    matches_df: pandas.core.frame.DataFrame
+        Data with only the two players selected and where two player games have been played
+    """
+
+    matches_df = df.loc[(df[player_one + "_played"] == 1) &
+                        (df[player_two + "_played"] == 1) &
+                        (df["Nr_players"] == 2), :]
+
+    if (len(matches_df) == 0) | (player_one == player_two):
+        return False, matches_df
+    else:
+        return True, matches_df
+
+
+def sidebar_frequency_graph(matches_df: pd.DataFrame) -> None:
+    """ Extracts and visualizes the frequency of games
+
+    Parameters:
+    -----------
+
+    matches_df: pandas.core.frame.DataFrame
+        Data with only the two players selected and where two player games have been played
+    """
+
+    to_plot = matches_df.sort_values("Date").set_index("Date").resample("3D").count().reset_index()
     chart = alt.Chart(to_plot).mark_area(
         color='goldenrod',
         opacity=1
@@ -59,62 +124,25 @@ def sidebar_graph(df, player_one, player_two):
         st.sidebar.altair_chart(chart)
 
 
-def compare_bars(df, player_one, player_two):
-    """ Compare the average performance between players
+def extract_winner(df: pd.DataFrame,
+                   player_one: str,
+                   player_two: str) -> None:
+    """ Extract the winner of the two players
+
+    Parameters:
+    -----------
+
+    df : pandas.core.frame.DataFrame
+        The data to be used for the analyses of played board game matches.
+
+    player_one : str
+        One of the players in the game
+
+    player_two : str
+        One of the players in the game
     """
-    st.header("**♟** Stats per Game **♟**")
-    st.write("Check the box below if you want to see aggregate statistics for each board game.")
 
-    compare = st.checkbox("Show stats per game")
-    if compare:
-        players = [player_one, player_two]
-        selection = df.loc[(df[player_one + "_played"] == 1) &
-                           (df[player_two + "_played"] == 1) &
-                           (df["has_score"] > 0) &
-                           (df["Nr_players"] == 2), :]
-        games = selection.Game.unique()
-        result = pd.DataFrame(columns=['Player', 'Game', 'Avg', 'Min', 'Max', 'Number'])
-
-        for player in players:
-            for game in games:
-                values = selection.loc[(selection['Game'] == game) &
-                                       (selection[player + "_played"] == 1), player + "_score"].values
-                result.loc[len(result), :] = [player, game, round(np.mean(values)), min(values),
-                                              max(values), len(values)]
-
-        # Make sure values are correct format
-        for column in ['Avg', 'Min', 'Max', 'Number']:
-            result[column] = result[column].astype(float)
-        result.Game = result.Game.astype(object)
-        result.Player = result.Player.astype(object)
-
-        # Plot barchart for each game as grouped bar is currently
-        # not working in streamlit
-        for game in result.Game.unique():
-            # Chart graph
-            to_plot = result.loc[result.Game == game, :]
-            bars = alt.Chart(to_plot).mark_bar().encode(
-                x='Avg:Q',
-                y='Player:O',
-                color='Player:O'
-            ).properties(
-                title='{}'.format(game)
-            )
-
-            text = bars.mark_text(
-                align='left',
-                baseline='middle',
-                dx=3  # Nudges text to right so it doesn't appear on top of the bar
-            ).encode(
-                text='Avg:Q'
-            )
-
-            st.write(bars + text)
-
-
-def general_stats(df, player_one, player_two):
     # Extract common games
-
     games = df.loc[(df[player_one + "_played"] == 1) &
                    (df[player_two + "_played"] == 1) &
                    (df["Nr_players"] == 2), :]
@@ -166,9 +194,75 @@ def general_stats(df, player_one, player_two):
     st.write(bars + text)
 
 
-def score_comparison(player_one, player_two, selection):
-    player_one_vals = list(selection[player_one + '_score'].values)
-    player_two_vals = list(selection[player_two + '_score'].values)
+def stats_per_game(matches_df: pd.DataFrame,
+                   player_one: str,
+                   player_two: str) -> None:
+    """ Show statistics per game
+
+
+    Parameters:
+    -----------
+
+    matches_df : pandas.core.frame.DataFrame
+        Data with only the two players selected and where two player games have been played
+
+    player_one : str
+        One of the players in the game
+
+    player_two : str
+        One of the players in the game
+    """
+
+    st.header("**♟** Stats per Game **♟**")
+    st.write("Please select a game below to see the statistics for both players.")
+    game_selection_df = game_selection(matches_df)
+    scores_over_time(player_one, player_two, game_selection_df)
+    general_stats_game(player_one, player_two, game_selection_df)
+
+
+def game_selection(matches_df: pd.DataFrame) -> pd.DataFrame:
+    """ Select game and filter data based on the game
+
+    Parameters:
+    -----------
+
+    matches_df: pandas.core.frame.DataFrame
+        Data with only the two players selected and where two player games have been played
+
+    Returns:
+    --------
+
+    game_selection_df : pandas.core.frame.DataFrame
+        Filtered data based on the selected game
+
+    """
+    games = list(matches_df.Game.unique())
+    games.sort()
+    game = st.selectbox("Select a game", games)
+    game_selection_df = matches_df.loc[(matches_df.Game == game), :]
+    return game_selection_df
+
+
+def scores_over_time(player_one: str,
+                     player_two: str,
+                     game_selection_df: pd.DataFrame) -> None:
+    """ Visualize scores over time for a specific game for two players
+
+    Parameters:
+    -----------
+
+    player_one : str
+        One of the players in the game
+
+    player_two : str
+        One of the players in the game
+
+    game_selection_df : pandas.core.frame.DataFrame
+        Filtered data based on the selected game
+    """
+
+    player_one_vals = list(game_selection_df[player_one + '_score'].values)
+    player_two_vals = list(game_selection_df[player_two + '_score'].values)
     vals = player_one_vals + player_two_vals
     player_indices = [player_one if i < len(player_one_vals) else player_two for i, _ in enumerate(vals)]
     indices = list(np.arange(len(vals) / 2))
@@ -195,28 +289,28 @@ def score_comparison(player_one, player_two, selection):
     st.altair_chart(chart)
 
 
-def game_selection(matches_df):
-    games = list(matches_df.Game.unique())
-    games.sort()
-    game = st.selectbox("Select a game", games)
-    selection = matches_df.loc[(matches_df.Game == game), :]
+def general_stats_game(player_one: str,
+                       player_two: str,
+                       game_selection_df: pd.DataFrame) -> None:
+    """ Show general statistics of a specific game for two players
 
-    return selection, game
+    Parameters:
+    -----------
 
+    player_one : str
+        One of the players in the game
 
-def stats_per_game(player_one, player_two, matches_df):
-    st.header("**♟** Stats per Game **♟**")
-    st.write("Please select a game below to see the statistics for both players.")
-    selection, _ = game_selection(matches_df)
-    score_comparison(player_one, player_two, selection)
-    general_stats_game(player_one, player_two, selection)
+    player_two : str
+        One of the players in the game
 
+    game_selection_df : pandas.core.frame.DataFrame
+        Filtered data based on the selected game
+    """
 
-def general_stats_game(player_one, player_two, selection):
     result = pd.DataFrame(columns=['Player', 'Avg', 'Min', 'Max', 'Number'])
 
     for player in [player_one, player_two]:
-        values = selection.loc[(selection[player + "_played"] == 1), player + "_score"].values
+        values = game_selection_df.loc[(game_selection_df[player + "_played"] == 1), player + "_score"].values
         result.loc[len(result), :] = [player, round(np.mean(values)), min(values),
                                       max(values), len(values)]
 
