@@ -1,8 +1,34 @@
 import re
+import numpy as np
 import pandas as pd
+from typing import List, Tuple
 
 
-def prepare_data(link):
+def prepare_data(link: str) -> Tuple[pd.DataFrame, List[str]]:
+    """ Load and prepare/preprocess the data
+
+    Parameters:
+    -----------
+
+    link : str
+        Link to the dataset, which should be in excel and of the following format:
+
+        |  Date        |  Players          |  Game        |  Scores                  |  Winner     | Version    |
+        |  2018-11-18  |  Peter+Mike       |  Qwixx       |  Peter77+Mike77          |  Peter+Mike | Normal     |
+        |  2018-11-18  |  Chris+Mike       |  Qwixx       |  Chris42+Mike99          |  Mike       | Big Points |
+        |  2018-11-22  |  Mike+Chris       |  Jaipur      |  Mike84+Chris91          |  Chris      | Normal     |
+        |  2018-11-30  |  Peter+Chris+Mike |  Kingdomino  |  Chris43+Mike37+Peter35  |  Chris      | 5x5        |
+
+    Returns:
+    --------
+
+    df : pandas.core.frame.DataFrame
+        The preprocessed data to be used for the analyses of played board game matches.
+
+    player_list : list of str
+        List of players
+    """
+
     df = pd.read_excel(link)
     df.Date = pd.to_datetime(df.Date)
 
@@ -26,18 +52,29 @@ def prepare_data(link):
     return df, player_list
 
 
-def extract_players(df):
-    """ Extract a list of players"""
+def extract_players(df: pd.DataFrame) -> List[str]:
+    """ Extract a list of players
+
+    Parameters:
+    -----------
+    df : pandas.core.frame.DataFrame
+        The preprocessed data to be used for the analyses of played board game matches.
+
+    Returns:
+    --------
+    player_list : list of str
+        List of players
+    """
+
     player_list = df.Players.unique()
     player_list = [players.split('+') for players in player_list]
     player_list = list(set([player for sublist in player_list for player in sublist]))
     return player_list
 
 
-def extract_score(row):
-    """ Extract the score per person by checking whether there
-    are multiple players in the game which are connected with a
-    + symbol
+def extract_score(row: np.array) -> np.array:
+    """ Extract the score per person by checking whether there are multiple players in the
+    game which are connected with a + symbol
     """
     scores = str(row.Scores)
 
@@ -53,7 +90,8 @@ def extract_score(row):
     return row
 
 
-def extract_winner(row, player_list):
+def extract_winner(row: np.array,
+                   player_list: List[str]) -> np.array:
     """ Extract the winner(s) per game
     """
 
@@ -66,7 +104,8 @@ def extract_winner(row, player_list):
     return row
 
 
-def extract_has_score(row, player_list):
+def extract_has_score(row: np.array,
+                      player_list: List[str]) -> np.array:
     """Check whether the game actually has a score"""
 
     scores = 0
@@ -80,7 +119,8 @@ def extract_has_score(row, player_list):
     return row
 
 
-def extract_has_winner(row, player_list):
+def extract_has_winner(row: np.array,
+                       player_list: List[str]) -> np.array:
     """Check whether the game actually has a score"""
 
     for player in player_list:
@@ -91,7 +131,8 @@ def extract_has_winner(row, player_list):
     return row
 
 
-def extract_has_played(row, player_list):
+def extract_has_played(row: np.array,
+                       player_list: List[str]) -> np.array:
     """Check whether a person played in the game"""
     played = str(row.Players).split("+")
 
