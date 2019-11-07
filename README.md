@@ -2,6 +2,8 @@
 
 > A Dashboard for the Board Game Geeks among us
 
+[Link to Application](https://bgexploration.herokuapp.com/)
+
 As many Board Game Geeks like myself track the scores of board game matches
 I decided to create an application allowing for the exploration of this data.
 Moreover, it felt like a nice opportunity to see how much information can be
